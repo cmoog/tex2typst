@@ -6,6 +6,7 @@ module Main where
 import Data.HashMap.Strict (HashMap, fromList, lookupDefault)
 import Data.Text as T
 import Data.Text.IO as T
+import System.Exit
 import System.IO
 import Text.TeXMath.Readers.TeX
 import Text.TeXMath.Types
@@ -16,7 +17,9 @@ main = do
   -- mapM_ print $ readTeX tex -- debug TeX expression
   case convert tex of
     Right a -> T.putStrLn a
-    Left a -> T.hPutStrLn stderr $ "error: " <> a
+    Left a -> do
+      T.hPutStrLn stderr $ "error: " <> a
+      exitFailure
 
 convert :: Text -> Either Text Text
 convert rawTex = do
