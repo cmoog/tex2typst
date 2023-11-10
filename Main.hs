@@ -20,14 +20,12 @@ main = do
 convert :: Text -> Either Text Text
 convert rawTex = do
   exprs <- readTeX rawTex
-  let converted = render <$> exprs
-  return $ T.unwords converted
+  return . T.unwords $ render <$> exprs
 
 render :: Exp -> Text
 render (EDelimited left right inner) = left <> T.unwords (delimited <$> inner) <> right
 render (EFraction _ a b) = func "frac" [a, b]
 render (EGrouped exprs) = parens . T.unwords $ render <$> exprs -- (e.g. {...} ) in TeX, <mrow>...</mrow> in MathML.
-render (EMathOperator op) = "op" <> parens (quoted op)
 render (ENumber a) = a
 render (EOver _ a b) = render a <> "^" <> render b
 render (EPhantom a) = render a
@@ -40,12 +38,65 @@ render (EUnder _ a b) = render a <> "_" <> render b
 render (EBoxed a) = "#block(stroke: 1pt, inset: 5pt)[$" <> render a <> "$]" -- TODO: verify
 render (EScaled factor expr) = "#scale(x: " <> showScaleFactor factor <> ", y: " <> showScaleFactor factor <> ")[$" <> render expr <> "$]"
 render (ESymbol _ a) = a
-render (EIdentifier a) = a -- TODO: map UTF to typst identifiers
+render (EUnderover _ base under over) = render base <> "_" <> render under <> "^" <> render over
+render (EMathOperator op) =
+  if op `Prelude.elem` builtinOps
+    then op
+    else "op" <> parens (quoted op)
+
+render (EIdentifier a) = a  -- TODO: map UTF to typst identifiers
+
 render (EStyled _ exprs) = T.unwords $ render <$> exprs -- TODO: style
+render (ESpace _) = "space" -- TODO: variable width
 render (EText _ a) = quoted a -- TODO: styles
-render (ESpace _) = " space " -- TODO: variable width
+
 render (EArray {}) = error "todo array"
-render (EUnderover {}) = error "todo underover"
+
+-- | builtin math operation identifiers: https://typst.app/docs/reference/math/op/
+builtinOps :: [Text]
+builtinOps =
+  [ "arccos",
+    "arcsin",
+    "arctan",
+    "arg",
+    "cos",
+    "cosh",
+    "cot",
+    "coth",
+    "csc",
+    "csch",
+    "ctg",
+    "deg",
+    "det",
+    "dim",
+    "exp",
+    "gcd",
+    "hom",
+    "id",
+    "im",
+    "inf",
+    "ker",
+    "lg",
+    "lim",
+    "liminf",
+    "limsup",
+    "ln",
+    "log",
+    "max",
+    "min",
+    "mod",
+    "Pr",
+    "sec",
+    "sech",
+    "sin",
+    "sinc",
+    "sinh",
+    "sup",
+    "tan",
+    "tanh",
+    "tg",
+    "tr"
+  ]
 
 -- | render a scale factor as a percentage
 showScaleFactor :: Rational -> Text
