@@ -3,6 +3,7 @@
 
 module Main where
 
+import Data.HashMap.Strict (HashMap, fromList, lookupDefault)
 import Data.Text as T
 import Data.Text.IO as T
 import System.IO
@@ -43,14 +44,22 @@ render (EMathOperator op) =
   if op `Prelude.elem` builtinOps
     then op
     else "op" <> parens (quoted op)
-
-render (EIdentifier a) = a  -- TODO: map UTF to typst identifiers
-
+render (EIdentifier a) = lookupDefault a a builtinIdents
 render (EStyled _ exprs) = T.unwords $ render <$> exprs -- TODO: style
 render (ESpace _) = "space" -- TODO: variable width
 render (EText _ a) = quoted a -- TODO: styles
-
 render (EArray {}) = error "todo array"
+
+-- TODO: generate from reference
+builtinIdents :: HashMap Text Text
+builtinIdents =
+  fromList
+    [ ("\2211", "sum"),
+      ("\960", "pi"),
+      ("\969", "omega"),
+      ("\945", "alpha"),
+      ("\946", "beta")
+    ]
 
 -- | builtin math operation identifiers: https://typst.app/docs/reference/math/op/
 builtinOps :: [Text]
