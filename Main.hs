@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wall #-}
 
@@ -6,25 +5,17 @@ module Main where
 
 import Data.Text as T
 import Data.Text.IO as T
-import System.Environment
 import System.IO
 import Text.TeXMath.Readers.TeX
 import Text.TeXMath.Types
 
 main :: IO ()
 main = do
-  tex <- getArgs
-  let texExprs = convert . T.pack <$> tex
-
-  -- debug TeX expression
-  mapM_ print $ readTeX . T.pack <$> tex
-
-  mapM_
-    ( \case
-        Right a -> T.putStrLn a
-        Left err -> T.hPutStrLn stderr $ "error: " <> err
-    )
-    texExprs
+  tex <- T.getContents
+  -- mapM_ print $ readTeX tex -- debug TeX expression
+  case convert tex of
+    Right a -> T.putStrLn a
+    Left a -> T.hPutStrLn stderr $ "error: " <> a
 
 convert :: Text -> Either Text Text
 convert rawTex = do
